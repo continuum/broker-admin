@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<domains>
+	#foreach($cm in $cmp)
+	    <domain name="$cm.name" expandable="true" ip="$cm.host" class="cmdomain">
+	    	<a />
+	    </domain>
+	#end
+</domains>

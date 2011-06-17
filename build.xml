@@ -1,0 +1,338 @@
+<?xml version="1.0"?>
+
+<!--
+  Build file for the framework de errores.
+-->
+
+<project name="diat" default="usage" basedir=".">
+
+	<property file="build.properties"/>
+	<property file="project.properties"/>
+
+	<path id="all-libs">
+
+		<fileset dir="${lib.dir}">
+			<include name="**/*.jar"/>
+		</fileset>
+
+	</path>
+
+	<target name="initdist" description="Initialize the distribution directory">
+
+		<mkdir dir="${dist.dir}"/>
+		<mkdir dir="${web.dir}/WEB-INF/lib"/>
+
+	</target>
+	
+	<target name="usage">
+
+
+		<echo message=""/>
+		<echo message="${prj-title} build file"/>
+		<echo message="------------------------------------------------------"/>
+		<echo message=""/>
+		<echo message="Among the available targets are:"/>
+		<echo message=""/>
+		<echo message="clean    --> Clean all generated directories"/>
+		<echo message="compile  --> Compile project and tests"/>
+		<echo message="jar 	    --> create project jar file"/>
+		<echo message="all	    --> clean,jar"/>
+		<echo message="release  --> create .zip with project release"/>
+		<echo message="tests    --> run tests"/>
+		<echo message=""/>
+
+	</target>
+	
+	<target name="clean" description="Clean all output dirs (dist, javadocs, classes, test-classes, etc)">
+
+		<delete dir="${target.classes.dir}"/>
+		<delete dir="${target.testclasses.dir}"/>
+		<delete dir="${target.junit.reports.dir}"/>
+		<delete dir="${target.junit.summary.dir}"/>
+		<delete dir="${target.release.dir}"/>
+		<delete dir="${target.otherclasses.dir}"/>
+		<delete dir="${web.dir}/WEB-INF/lib"/>
+		
+
+		<!-- Just kill target dir (it's safer). No need at this point to keep it. -->
+		<delete dir="${target.dir}"/>
+
+		<delete dir="${dist.dir}"/>
+		<delete dir="${javadoc.dir}"/>
+
+	</target>
+
+	<target name="copy-runtime-jars-to-lib" >
+		<copy todir="${web.dir}/WEB-INF/lib" preservelastmodified="true">
+			<fileset dir="${lib.dir}">
+				<include name="json.jar"/>
+				<include name="com.ibm.mq.jar"/>
+				<include name="ConfigManagerProxy.jar"/>
+				<include name="spring.jar"/>
+				<include name="spring-webmvc.jar"/>
+				<include name="velocity-1.5.jar"/>
+				<include name="aspectjrt.jar"/>
+				<include name="aspectjweaver.jar"/>
+			</fileset>
+			<!-- dependencias -->
+			<fileset dir="${dist.dir}">
+				<include name="${prj-name}.jar"/>
+			</fileset>
+		</copy>
+	</target>
+	
+	<!--
+		Compile the main source tree.
+	-->
+	<target name="compile" description="Compile main source tree java files into class files">
+
+		<mkdir dir="${target.classes.dir}"/>
+		<mkdir dir="${target.classes.dir}/META-INF"/>
+
+		<javac destdir="${target.classes.dir}" source="1.5" target="1.5" debug="${debug}"
+					 deprecation="false" optimize="false" failonerror="true">
+			<src path="${src.dir}"/>
+			<classpath refid="all-libs"/>
+		</javac>
+
+		<copy todir="${target.classes.dir}" preservelastmodified="true">
+			<fileset dir="${src.dir}">
+				<include name="**/*.properties"/>
+				<include name="**/*.xml"/>
+				<include name="**/*.dtd"/>
+				<include name="**/*.vm"/>
+				<include name="**/*.ftl"/>
+				<include name="**/*.types"/>
+			</fileset>
+		</copy>
+
+	</target>
+
+	<target name="jar-fw" depends="compile,initdist" description="Create module-specific JAR files">
+
+		<jar jarfile="${dist.dir}/${prj-name}.jar" basedir="${target.classes.dir}">
+			<manifest>
+				<attribute name="Implementation-Title" value="${prj-title}"/>
+				<attribute name="Implementation-Version" value="${prj-version}"/>
+			</manifest>
+		</jar>
+
+	</target>
+
+	<target name="war" depends="clean,initdist,compile,jar" description="Build the web application archive">
+		<antcall target="copy-runtime-jars-to-lib" />
+		<war warfile="${dist.dir}/${war.name}.war" basedir="${web.dir}" webxml="${web.dir}/WEB-INF/web.xml">
+			<include name="*"/>
+		    <include name="css/**"/>
+		    <include name="img/**"/>
+		    <include name="js/**"/>
+		    <include name="anexos/**"/>
+			<include name="WEB-INF/*.xml"/>
+			<include name="WEB-INF/*.tld"/>
+		    <include name="WEB-INF/tiles/**"/>
+			<include name="WEB-INF/lib/**"/>
+		    <include name="WEB-INF/classes/**"/>
+			<include name="WEB-INF/jsp/**"/>
+            <include name="WEB-INF/flows/*.xml"/>
+            <include name="WEB-INF/beans/*.xml"/>
+			<exclude name="WEB-INF/web.xml"/>
+			<exclude name="WEB-INF/web-rt.xml"/>
+		</war>
+	</target>
+	
+	<target name="war-was" depends="clean,initdist,compile,jar" description="Build the web application archive">
+		<antcall target="copy-runtime-jars-to-lib-was" />
+		<war warfile="${dist.dir}/${war.name}-was.war" basedir="${web.dir}" webxml="${web.dir}/WEB-INF/web.xml">
+			<include name="*"/>
+		    <include name="css/**"/>
+		    <include name="img/**"/>
+		    <include name="js/**"/>
+		    <include name="anexos/**"/>
+			<include name="WEB-INF/*.xml"/>
+			<include name="WEB-INF/*.tld"/>
+		    <include name="WEB-INF/tiles/**"/>
+			<include name="WEB-INF/lib/**"/>
+		    <include name="WEB-INF/classes/**"/>
+			<include name="WEB-INF/jsp/**"/>
+            <include name="WEB-INF/flows/*.xml"/>
+            <include name="WEB-INF/beans/*.xml"/>
+			<exclude name="WEB-INF/web.xml"/>
+		</war>
+	</target>
+	
+	<target name="srczip" depends="initdist" description="Create source ZIP (containing Java sources)">
+
+		<delete file="${dist.dir}/*.zip"/>
+
+		<zip zipfile="${dist.dir}/${prj-name}-src.zip">
+			<fileset dir="${src.dir}">
+				<include name="*"/>
+			</fileset>
+		</zip>
+
+	</target>
+
+	<!--
+		Generate javadoc on JDK 1.4
+	-->
+	<target name="doc" description="Generate framework Javadocs on JDK 1.4">
+
+		<delete dir="${javadoc.dir}"/>
+		<mkdir dir="${javadoc.dir}"/>
+
+		<javadoc sourcepath="${src.dir}" destdir="${javadoc.dir}" windowtitle="${prj-title}"
+						 source="1.5" access="package" author="true" version="true" use="true" defaultexcludes="true">
+			<arg value="-breakiterator"/>
+			<doctitle><![CDATA[<h1>${prj-title}</h1>]]></doctitle>
+			<bottom><![CDATA[<i>Copyright (c) 2002-2005 Interplanet S.A</i>]]></bottom>
+			<classpath refid="all-libs"/>
+			<packageset dir="${src.dir}">
+				<include name="cl/achs/**"/>
+			</packageset>
+			<!-- Unfortunately, jDocs have switched off their package listing, so we can't link to jDocs :(
+			<link href="http://java.sun.com/j2ee/1.4/docs/api"/>
+			<link href="http://java.sun.com/j2se/1.4.2/docs/api"/>
+			<link href="http://aopalliance.sourceforge.net/doc"/>
+			-->
+		</javadoc>
+
+	</target>	
+
+	<!--
+		Compile the main test tree.
+	-->
+	<target name="compile-test"	description="Compile test source tree java files into class files">
+
+		<mkdir dir="${target.testclasses.dir}"/>
+
+		<javac destdir="${target.testclasses.dir}" source="1.5" target="1.5" debug="${debug}"
+					 deprecation="false" optimize="false" failonerror="true">
+			<src path="${test.dir}"/>
+			<classpath refid="all-libs"/>
+			<classpath location="${target.classes.dir}"/>
+		</javac>
+
+		<!-- Pick up logging config from test directory -->
+		<copy todir="${target.testclasses.dir}" preservelastmodified="true">
+			<fileset dir="${test.dir}">
+				<include name="**/*.properties"/>
+				<include name="**/*.xml"/>
+				<include name="**/*.types"/>
+			</fileset>
+		</copy>
+
+	</target>
+
+
+	<!--
+		Run test suite and generate test summary.
+		Does not halt on failure or error, in contrast to the "tests" target above.
+	-->
+	<target name="run-tests" depends="compile-test" description="Run tests and generate test summary">
+
+		<property name="reports.dir" value="${target.junit.reports.dir}"/>
+		<property name="summary.dir" value="${target.junit.summary.dir}"/>
+
+		<mkdir dir="${reports.dir}"/>
+		<mkdir dir="${summary.dir}"/>
+
+		<junit printsummary="yes" haltonfailure="no" haltonerror="no">
+
+			<jvmarg line="-Djava.awt.headless=true"/>
+
+			<!-- Must go first to ensure any jndi.properties files etc take precedence  -->
+			<classpath location="${target.testclasses.dir}"/>
+			<classpath location="${target.classes.dir}"/>
+			<classpath location="${basedir}/resources"/>
+			
+			<!-- Need files loaded as resources -->
+			<classpath location="${test.dir}"/>
+
+			<classpath refid="all-libs"/>
+
+			<formatter type="plain" usefile="false"/>
+			<formatter type="xml"/>
+			
+			<test name="cl.achs.scai.core.services.logic.PlantillaServiciosImplTest" haltonfailure="yes">
+			</test>
+
+			<!--
+			<batchtest fork="yes" todir="${reports.dir}">
+				<fileset dir="${target.testclasses.dir}" includes="${test.includes}" excludes="${test.excludes}"/>
+			</batchtest>
+			-->
+
+		</junit>
+
+		<junitreport todir="${reports.dir}">
+
+			<fileset dir="${reports.dir}">
+				<include name="TEST-*.xml"/>
+			</fileset>
+			<report todir="${summary.dir}"/>
+
+		</junitreport>
+
+	</target>
+	
+	<target name="deploy">
+		<copy file="${dist.dir}/${prj-name}.jar" todir="${tomcat.common.lib}" >
+		</copy>
+		<copy file="${dist.dir}/achs-modelo.jar" todir="${tomcat.common.lib}" >
+		</copy>
+	</target>
+	
+	<target name="jar" depends="jar-fw" />
+	
+	<target name="all" depends="clean,compile,jar,war,doc,release" />
+
+	<target name="release" depends="jar,doc" description="Generate release zips">
+
+		<mkdir dir="${target.release.dir}"/>
+
+		<delete file="${target.release.dir}/${release.zip}"/>
+
+		<fileset id="main" dir=".">
+			<include name="${dist.dir}/*.jar"/>
+			<include name="${dist.dir}/*.dtd"/>
+			<include name="${dist.dir}/*.tld"/>
+			<include name="${dist.dir}/*.vm"/>
+			<include name="${dist.dir}/*.ftl"/>
+			<include name="${doc.dir}/**"/>
+			<include name="${resources.dir}/**"/>
+			<include name="etc/*"/>
+			<include name="doc/**"/>
+			<include name="resources/**"/>
+			<include name="web/*.jsp"/>
+			<include name="web/WEB-INF/**"/>
+			<include name="web/css/*"/>
+			<include name="web/js/*"/>
+			<include name="web/img/*"/>
+			<include name="web/*"/>
+			<include name="src/**"/>
+			<include name="test/**"/>
+			<include name="*.bat"/>
+			<include name="*.txt"/>
+			<include name="*.xml"/>
+			<include name="*.tld"/>
+			<include name="*.dtd"/>
+			<include name="*.jsp"/>
+			<include name="*.properties"/>
+		</fileset>
+
+		<zip zipfile="${target.release.dir}/${prj-name}.zip">
+			<zipfileset refid="main" prefix="${prj-name}-${prj-version}"/>
+		</zip>
+
+		<zip zipfile="${target.release.dir}/${prj-name}-con-dependencias.zip">
+			<zipfileset refid="main" prefix="${prj-name}-${prj-version}"/>
+			<zipfileset dir="." prefix="${prj-name}-${prj-version}">
+				<include name="lib/**"/>
+			</zipfileset>
+		</zip>
+
+	</target>
+
+	<target name="clean-release" depends="clean, release"/>
+
+</project>

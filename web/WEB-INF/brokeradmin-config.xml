@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans 
+	xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd 
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd">
+
+	<!-- Spring @AspectJ support -->
+	<aop:aspectj-autoproxy/>
+	
+	<!-- dao with a mock implementation -->
+	<bean id="mockDao" class="cl.brokeradmin.dao.mock.ConfigurationDaoMockImpl" />
+
+	<!-- dao with a mock implementation -->
+	<bean id="configManagerMain" class="cl.brokeradmin.main.ConfigManagerMainImpl" destroy-method="disconnectManagers" />
+	
+	<!-- declare the aspects for spring take in account -->
+	<bean class="cl.brokeradmin.aop.aspect.BrokerAdminMainAspect">
+		<property name="configurationDao" ref="mockDao" />
+	</bean>
+	<bean class="cl.brokeradmin.aop.aspect.Log" />
+	
+</beans>

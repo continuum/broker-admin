@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans 
+	xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+
+	<!-- excepcion resolver -->
+	<bean id="exceptionHandler" class="cl.brokeradmin.web.handler.JsonHandlerExceptionResolver" />
+	
+	<!-- generates view names for us based on the URL [convention over configuration] -->
+	<bean id="viewNameTranslator" class="org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator"/>
+
+	<!-- velocity enviroment config -->	
+	<bean id="velocityConfig" class="org.springframework.web.servlet.view.velocity.VelocityConfigurer">
+		<property name="resourceLoaderPath" value="/WEB-INF/vm-templates/"/>
+	</bean>
+
+	<!--  view resolver para la generacion de pdf, imagenes, json, etc.. -->	
+	<bean id="otherViewResolver" class="org.springframework.web.servlet.view.ResourceBundleViewResolver">
+		<property name="order" value="1" />
+		<property name="basename" value="views"/>
+	</bean>
+		
+	<!-- velocity resolver -->
+	<bean id="viewResolver" class="org.springframework.web.servlet.view.velocity.VelocityViewResolver">
+		<property name="order" value="2" />
+		<property name="cache" value="true"/>
+		<property name="prefix" value=""/>
+		<property name="suffix" value=".vm"/>
+	</bean>	
+	
+	<!-- default handler [convention over configuration] -->
+	<bean class="org.springframework.web.servlet.mvc.support.ControllerClassNameHandlerMapping"/>
+
+	<!-- multiaction controller for broker admin -->
+    <bean id="brokerAdmin" class="cl.brokeradmin.web.controller.BrokerAdminController">
+    	<property name="configurationDao" ref="mockDao" />
+    	<property name="configManagerMain" ref="configManagerMain" />
+    </bean>
+
+</beans>
